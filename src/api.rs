@@ -4,15 +4,16 @@ use axum::{
     response::IntoResponse,
     Json, Router, extract::State,
 };
-use migration::{Migrator, MigratorTrait};
+use crate::migration::{Migrator, MigratorTrait};
 use serde::{Deserialize, Serialize};
-use core::{sea_orm::{Database, DatabaseConnection}, Mutation};
+use crate::core::{sea_orm::{Database, DatabaseConnection}, Mutation};
 use std::net::SocketAddr;
 use std::env;
 
 #[derive(Clone)]
 struct AppState {
     db: DatabaseConnection,
+    apikey: String,
 }
 
 #[tokio::main]
@@ -28,8 +29,12 @@ pub async fn main() {
         .expect("Database connection failed");
     Migrator::up(&conn, None).await.unwrap();
 
+    // Read `./apikey.txt` and store it in the state
+    let apikey = std::fs::read_to_string("apikey.txt").unwrap().trim().to_string();
+
     let app_state = AppState {
         db: conn,
+        apikey,
     };
 
     // build our application with a route
@@ -57,14 +62,19 @@ async fn root() -> &'static str {
 #[derive(Deserialize)]
 struct StateChange {
     new_state: bool,
+    apikey: String,
 }
 
 // record a state change
 async fn record_state_change(
     state: State<AppState>,
-    Json(StateChange{new_state}): Json<StateChange>,
+    Json(StateChange{new_state, apikey}): Json<StateChange>,
 ) -> impl IntoResponse {
     let db = &state.db;
+    if apikey != state.apikey {
+        // Show an error
+        return (StatusCode::UNAUTHORIZED, "Invalid API key");
+    }
     Mutation::insert_state_change(db, new_state).await.unwrap();
-    StatusCode::OK
+    (StatusCode::OK, "State change recorded")
 }

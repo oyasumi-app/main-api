@@ -1,0 +1,14 @@
+version: '3'
+services:
+  main-api:
+    build: .
+    expose: [3000]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.main-api.rule=Host(`api.oyasumi.app`)
+      - traefik.http.routers.main-api.entrypoints=websecure
+    volumes:
+      - ./database.sqlite:/app/database.sqlite
+      - ./apikey.txt:/app/apikey.txt
+    environment:
+      - DATABASE_URL=sqlite:///app/database.sqlite

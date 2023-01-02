@@ -1,5 +1,5 @@
 use chrono::Utc;
-use ::entity::{state_change, state_change::Model as StateChangeModel};
+use crate::entity::{state_change, state_change::Model as StateChangeModel};
 use sea_orm::{*, prelude::{DateTimeUtc}};
 
 pub struct Mutation;

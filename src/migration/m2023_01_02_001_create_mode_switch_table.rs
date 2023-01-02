@@ -1,4 +1,5 @@
 use sea_orm_migration::prelude::*;
+use sea_orm::DbErr;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
