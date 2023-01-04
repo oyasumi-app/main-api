@@ -10,7 +10,7 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(StateChange::StateChange)
+                    .table(StateChange::Table)
                     .if_not_exists()
                     .col(
                         ColumnDef::new(StateChange::Id)
@@ -28,15 +28,15 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(StateChange::StateChange).to_owned())
+            .drop_table(Table::drop().table(StateChange::Table).to_owned())
             .await
     }
 }
 
 /// Learn more at https://docs.rs/sea-query#iden
 #[derive(Iden)]
-enum StateChange {
-    StateChange,
+pub enum StateChange {
+    Table,
     Id,
     When,
     NewState,

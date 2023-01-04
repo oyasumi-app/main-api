@@ -2,14 +2,16 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "state_change")]
+#[sea_orm(table_name = "user_token")]
 pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: i64,
-    pub when: DateTimeUtc,
-    pub new_state: bool,
     pub user: i64,
+    pub token: String,
+    pub created_at: DateTimeUtc,
+    pub created_by_ip: String,
+    pub expires: DateTimeUtc,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

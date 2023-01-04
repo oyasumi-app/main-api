@@ -10,6 +10,10 @@ use crate::core::{sea_orm::{Database, DatabaseConnection}, Mutation};
 use std::net::SocketAddr;
 use std::env;
 
+use sea_orm::EntityTrait;
+use sea_orm::ColumnTrait;
+use sea_orm::QueryFilter;
+
 #[derive(Clone)]
 struct AppState {
     db: DatabaseConnection,
@@ -29,12 +33,27 @@ pub async fn main() {
         .expect("Database connection failed");
     Migrator::up(&conn, None).await.unwrap();
 
-    // Read `./apikey.txt` and store it in the state
-    let apikey = std::fs::read_to_string("apikey.txt").unwrap().trim().to_string();
+    // Print all users, and their tokens
+    let users = crate::entity::user::Entity::find()
+        .all(&conn)
+        .await
+        .unwrap();
+    for user in users {
+        println!("User: {}", user.username);
+        let tokens = crate::entity::user_token::Entity::find()
+            .filter(crate::entity::user_token::Column::User.eq(user.id))
+            .all(&conn)
+            .await
+            .unwrap();
+        for token in tokens {
+            println!("  Token: {}", token.token);
+        }
+    }
+
 
     let app_state = AppState {
         db: conn,
-        apikey,
+        apikey: "".to_string(),
     };
 
     // build our application with a route
