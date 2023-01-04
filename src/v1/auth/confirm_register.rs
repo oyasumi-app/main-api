@@ -1,5 +1,4 @@
 use axum::{extract::State, Json};
-use axum_client_ip::ClientIp;
 
 use crate::{AppState, Snowflake};
 
@@ -27,7 +26,6 @@ pub enum ConfirmRegistrationResponse {
 #[axum_macros::debug_handler]
 pub async fn confirm_register(
     State(app_state): State<AppState>,
-    ClientIp(ip): ClientIp,
     Json(request): Json<ConfirmRegistrationRequest>,
 ) -> Json<ConfirmRegistrationResponse> {
     let pending_registration =
@@ -71,8 +69,8 @@ pub async fn confirm_register(
     let user_creation =
         crate::entity::registration::upgrade_to_user(&app_state.db, &pending_registration).await;
     if user_creation.is_err() {
-        return Json(ConfirmRegistrationResponse::DatabaseError);
+        Json(ConfirmRegistrationResponse::DatabaseError)
     } else {
-        return Json(ConfirmRegistrationResponse::Ok);
+        Json(ConfirmRegistrationResponse::Ok)
     }
 }

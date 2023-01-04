@@ -15,7 +15,7 @@ pub struct RegistrationRequest {
 pub enum RegistrationResponse {
     Ok { id: Snowflake },
     PendingRegistrationExists { id: Snowflake },
-    Err, // TODO: a registration request for an existing username/email MUST NOT be an error (to prevent enumeration attacks)
+    //Err, // TODO: a registration request for an existing username/email MUST NOT be an error (to prevent enumeration attacks)
     DatabaseError,
 }
 

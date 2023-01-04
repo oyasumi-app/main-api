@@ -56,14 +56,6 @@ fn u64_to_i64(x: u64) -> i64 {
     i64::from_be_bytes(bytes)
 }
 
-/// Losslessly convert an i64 to an u64, copying every bit.
-/// The u64 might be larger than the original i64 as a result of this.
-/// Has the same effect as reinterpreting the bits as an u64.
-fn i64_to_u64(x: i64) -> u64 {
-    let bytes = x.to_be_bytes();
-    u64::from_be_bytes(bytes)
-}
-
 impl From<Snowflake> for i64 {
     fn from(snowflake: Snowflake) -> Self {
         snowflake.0

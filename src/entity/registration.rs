@@ -6,8 +6,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::Snowflake;
 
-use super::user;
-
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "registration")]
 pub struct Model {
