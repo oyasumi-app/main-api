@@ -9,13 +9,10 @@ pub struct Model {
     pub id: i64,
     pub username: String,
     pub email: String,
-    pub password_hash: Vec<u8>,
-    pub password_salt: Vec<u8>,
-    pub password_log_n: i32, // N = 2^log_N
-    pub password_r: i32,
-    pub password_p: i32,
+    pub password_hash: String,
     pub created_at: DateTimeUtc,
 }
+
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}

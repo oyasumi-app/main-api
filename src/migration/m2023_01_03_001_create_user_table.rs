@@ -23,11 +23,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(User::Username).char().unique_key().not_null())
                     .col(ColumnDef::new(User::Email).char().unique_key().not_null())
-                    .col(ColumnDef::new(User::PasswordHash).binary().not_null())
-                    .col(ColumnDef::new(User::PasswordSalt).binary().not_null())
-                    .col(ColumnDef::new(User::PasswordLogN).integer().not_null())
-                    .col(ColumnDef::new(User::PasswordR).integer().not_null())
-                    .col(ColumnDef::new(User::PasswordP).integer().not_null())
+                    .col(ColumnDef::new(User::PasswordHash).string().not_null())
                     .col(ColumnDef::new(User::CreatedAt).date_time().not_null())
                     .to_owned(),
             )
@@ -92,11 +88,7 @@ pub enum User {
     Username,
     Email,
     PasswordHash,
-    PasswordSalt,
-    PasswordLogN,
-    PasswordR,
-    PasswordP,
     CreatedAt,
-
+    
     StateChangeUserFKey,
 }

@@ -5,19 +5,16 @@ use axum::{
     Json, Router, extract::State,
 };
 use crate::migration::{Migrator, MigratorTrait};
-use serde::{Deserialize, Serialize};
-use crate::core::{sea_orm::{Database, DatabaseConnection}, Mutation};
+use crate::core::{sea_orm::{Database, DatabaseConnection}};
 use std::net::SocketAddr;
 use std::env;
 
-use sea_orm::EntityTrait;
-use sea_orm::ColumnTrait;
-use sea_orm::QueryFilter;
+
+use axum_auth::AuthBearer;
 
 #[derive(Clone)]
-struct AppState {
-    db: DatabaseConnection,
-    apikey: String,
+pub struct AppState {
+    pub db: DatabaseConnection,
 }
 
 #[tokio::main]
@@ -33,34 +30,15 @@ pub async fn main() {
         .expect("Database connection failed");
     Migrator::up(&conn, None).await.unwrap();
 
-    // Print all users, and their tokens
-    let users = crate::entity::user::Entity::find()
-        .all(&conn)
-        .await
-        .unwrap();
-    for user in users {
-        println!("User: {}", user.username);
-        let tokens = crate::entity::user_token::Entity::find()
-            .filter(crate::entity::user_token::Column::User.eq(user.id))
-            .all(&conn)
-            .await
-            .unwrap();
-        for token in tokens {
-            println!("  Token: {}", token.token);
-        }
-    }
-
-
     let app_state = AppState {
         db: conn,
-        apikey: "".to_string(),
     };
 
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root`
         .route("/", get(root))
-        .route("/record", post(record_state_change))
+        .nest("/v1", crate::v1::get_router())
         .with_state(app_state);
 
     // run our app with hyper
@@ -76,24 +54,4 @@ pub async fn main() {
 // basic handler that responds with a static string
 async fn root() -> &'static str {
     "Hello, World!"
-}
-
-#[derive(Deserialize)]
-struct StateChange {
-    new_state: bool,
-    apikey: String,
-}
-
-// record a state change
-async fn record_state_change(
-    state: State<AppState>,
-    Json(StateChange{new_state, apikey}): Json<StateChange>,
-) -> impl IntoResponse {
-    let db = &state.db;
-    if apikey != state.apikey {
-        // Show an error
-        return (StatusCode::UNAUTHORIZED, "Invalid API key");
-    }
-    Mutation::insert_state_change(db, new_state).await.unwrap();
-    (StatusCode::OK, "State change recorded")
 }
