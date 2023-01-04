@@ -1,5 +1,6 @@
-mod mutation;
-mod query;
+pub mod identifiers;
+pub mod mutation;
+pub mod query;
 
 pub use mutation::*;
 pub use query::*;

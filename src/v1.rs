@@ -1,13 +1,15 @@
+mod auth;
 
-use axum::{Router, extract::State, routing::get};
+use axum::{routing::get, Router};
 
-use crate::api::AppState;
+use crate::AppState;
 
 pub fn get_router() -> Router<AppState> {
     Router::new()
         .route("/", get(root))
+        .nest("/auth", crate::v1::auth::get_router())
 }
 
-async fn root(state: State<AppState>) -> &'static str {
+async fn root() -> &'static str {
     "V1"
 }

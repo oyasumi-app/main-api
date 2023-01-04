@@ -1,16 +1,8 @@
-use axum::{
-    routing::{get, post},
-    http::StatusCode,
-    response::IntoResponse,
-    Json, Router, extract::State,
-};
+use crate::core::sea_orm::{Database, DatabaseConnection};
 use crate::migration::{Migrator, MigratorTrait};
-use crate::core::{sea_orm::{Database, DatabaseConnection}};
-use std::net::SocketAddr;
+use axum::{routing::get, Router};
 use std::env;
-
-
-use axum_auth::AuthBearer;
+use std::net::SocketAddr;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -30,9 +22,7 @@ pub async fn main() {
         .expect("Database connection failed");
     Migrator::up(&conn, None).await.unwrap();
 
-    let app_state = AppState {
-        db: conn,
-    };
+    let app_state = AppState { db: conn };
 
     // build our application with a route
     let app = Router::new()
@@ -46,7 +36,7 @@ pub async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
 }

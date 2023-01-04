@@ -1,5 +1,5 @@
-use sea_orm_migration::prelude::*;
 use sea_orm::DbErr;
+use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -16,7 +16,6 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(StateChange::Id)
                             .integer()
                             .not_null()
-                            .auto_increment()
                             .primary_key(),
                     )
                     .col(ColumnDef::new(StateChange::When).date_time().not_null())

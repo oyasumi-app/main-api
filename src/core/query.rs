@@ -1,44 +1,31 @@
-use crate::entity::state_change::Entity as StateChangeEntity;
 use sea_orm::*;
 
 pub struct Query;
 
-pub enum LoginIdentifier<'a> {
-    Username(&'a str),
-    Email(&'a str),
+pub enum LoginIdentifier {
+    Username(String),
+    Email(String),
 }
-
-impl<'a> From<&'a str> for LoginIdentifier<'a> {
-    fn from(s: &'a str) -> Self {
-        if s.contains('@') {
-            LoginIdentifier::Email(s)
-        } else {
-            LoginIdentifier::Username(s)
-        }
-    }
-}
-    
 
 impl Query {
     pub async fn get_user_by_login(
         db: &DbConn,
-        login: LoginIdentifier<'_>,
+        login: LoginIdentifier,
         password: &str,
-    ) -> Option<crate::entity::user::Model> {  // Option is returned to avoid user enumeration
+    ) -> Option<crate::entity::user::Model> {
+        // Option is returned to avoid user enumeration
         // First find the user entity
         let user = match login {
-            LoginIdentifier::Username(username) => {
-                crate::entity::user::Entity::find()
-                    .filter(crate::entity::user::Column::Username.eq(username))
-                    .one(db)
-                    .await.ok()?
-            }
-            LoginIdentifier::Email(email) => {
-                crate::entity::user::Entity::find()
-                    .filter(crate::entity::user::Column::Email.eq(email))
-                    .one(db)
-                    .await.ok()?
-            }
+            LoginIdentifier::Username(username) => crate::entity::user::Entity::find()
+                .filter(crate::entity::user::Column::Username.eq(username))
+                .one(db)
+                .await
+                .ok()?,
+            LoginIdentifier::Email(email) => crate::entity::user::Entity::find()
+                .filter(crate::entity::user::Column::Email.eq(email))
+                .one(db)
+                .await
+                .ok()?,
         };
         let user = user?;
         // Then check the password
