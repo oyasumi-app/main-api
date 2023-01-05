@@ -8,6 +8,7 @@ mod v1;
 
 pub use crate::core::identifiers::*;
 pub use api::AppState;
+pub use security::http_auth::{ExtractUser, RequireUser, User};
 
 fn main() {
     api::main();

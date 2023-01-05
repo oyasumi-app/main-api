@@ -1,4 +1,7 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::{
+    fmt::{Display, Formatter},
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 use async_std::sync::Mutex;
 use chrono::{DateTime, Utc};
@@ -73,6 +76,14 @@ impl From<Snowflake> for sea_orm::Value {
         sea_orm::Value::BigInt(Some(snowflake.0))
     }
 }
+
+impl Display for Snowflake {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+// SeaORM integration starts here
 
 impl sea_orm::sea_query::ValueType for Snowflake {
     fn try_from(v: sea_orm::Value) -> Result<Self, sea_orm::sea_query::ValueTypeErr> {

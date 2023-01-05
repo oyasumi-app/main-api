@@ -1,5 +1,7 @@
 use crate::core::sea_orm::{Database, DatabaseConnection};
 use crate::migration::{Migrator, MigratorTrait};
+
+use axum::middleware::from_fn_with_state;
 use axum::{routing::get, Router};
 use std::env;
 use std::net::SocketAddr;
@@ -29,7 +31,12 @@ pub async fn main() {
         // `GET /` goes to `root`
         .route("/", get(root))
         .nest("/v1", crate::v1::get_router())
-        .with_state(app_state);
+        .with_state(app_state.clone())
+        .route_layer(from_fn_with_state(
+            app_state,
+            crate::security::http_auth::auth,
+        ));
+    //.layer(middleware::from_fn_async(crate::security::http_auth::auth));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`

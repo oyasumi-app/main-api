@@ -29,6 +29,12 @@ pub enum Relation {
     User,
 }
 
+impl Related<crate::entity::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::User.def()
+    }
+}
+
 impl ActiveModelBehavior for ActiveModel {}
 
 const TOKEN_LENGTH: u16 = 32;
@@ -54,4 +60,49 @@ pub async fn make_token(
     };
     user_token_new.insert(db).await?;
     Ok(token)
+}
+
+pub async fn find_token(
+    db: &DbConn,
+    token: &str,
+) -> Result<Option<(crate::entity::user_token::Model, crate::entity::user::Model)>, DbErr> {
+    let now = chrono::Utc::now();
+    let filter = Entity::find()
+        .filter(Column::Token.eq(token).and(Column::Expires.gt(now)))
+        .find_also_related(crate::entity::user::Entity)
+        .one(db)
+        .await?;
+    match filter {
+        None => Ok(None),
+        Some((user_token, maybe_user)) => {
+            let user = maybe_user
+                .unwrap_or_else(|| panic!("UserToken ID={} exists without User", user_token.id));
+            Ok(Some((user_token, user)))
+        }
+    }
+}
+
+pub async fn find_token_by_id(
+    db: &DbConn,
+    id: Snowflake,
+) -> Result<Option<(crate::entity::user_token::Model, crate::entity::user::Model)>, DbErr> {
+    let now = chrono::Utc::now();
+    let filter = Entity::find()
+        .filter(Column::Id.eq(id).and(Column::Expires.gt(now)))
+        .find_also_related(crate::entity::user::Entity)
+        .one(db)
+        .await?;
+    match filter {
+        None => Ok(None),
+        Some((user_token, maybe_user)) => {
+            let user = maybe_user
+                .unwrap_or_else(|| panic!("UserToken ID={} exists without User", user_token.id));
+            Ok(Some((user_token, user)))
+        }
+    }
+}
+
+pub async fn delete_token(db: &DbConn, id: Snowflake) -> Result<(), DbErr> {
+    Entity::delete_by_id(id).exec(db).await?;
+    Ok(())
 }
