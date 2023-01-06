@@ -30,11 +30,24 @@ pub async fn auth<B>(
     next: Next<B>,
 ) -> Result<Response, StatusCode> {
     let mut token = None;
-    // Check for a token in the Authorization header
-    if let Some(header) = headers.get("Authorization") {
-        if let Ok(header) = header.to_str() {
-            if let Some(header) = header.strip_prefix("Bearer ") {
-                token = Some(header.to_string());
+    // Check for a token in the cookie named "Token"
+    if let Some(cookie) = headers.get("Cookie") {
+        if let Ok(cookie) = cookie.to_str() {
+            for cookie in cookie.split(';') {
+                let cookie = cookie.trim();
+                if let Some(cookie) = cookie.strip_prefix("Token=") {
+                    token = Some(cookie.to_string());
+                }
+            }
+        }
+    }
+    if token.is_none() {
+        // Check for a token in the Authorization header
+        if let Some(header) = headers.get("Authorization") {
+            if let Ok(header) = header.to_str() {
+                if let Some(header) = header.strip_prefix("Bearer ") {
+                    token = Some(header.to_string());
+                }
             }
         }
     }

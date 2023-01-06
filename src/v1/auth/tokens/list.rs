@@ -1,8 +1,4 @@
-use axum::{
-    extract::State,
-    http::StatusCode,
-    Json,
-};
+use axum::{extract::State, http::StatusCode, Json};
 
 use crate::{entity::user_token, AppState, RequireUser, Snowflake};
 
