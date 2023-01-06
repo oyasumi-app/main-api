@@ -22,8 +22,19 @@ pub fn get_router() -> Router<AppState> {
         .route("/confirm_register", post(confirm_register))
         .route("/check", get(check))
         .route(
-            "/token/:id",
+            "/token/by_id/:id",
             get(tokens::get_token).delete(tokens::delete_token),
         )
-        .route("/token/by_token/:token", get(tokens::get_token_by_token).delete(tokens::delete_token_by_token))
+        .route(
+            "/token/@me",
+            get(tokens::get_current_token).delete(tokens::delete_current_token),
+        )
+        .route(
+            "/token/by_token/:token",
+            get(tokens::get_token_by_token).delete(tokens::delete_token_by_token),
+        )
+        .route(
+            "/token/list",
+            get(tokens::get_user_tokens).delete(tokens::delete_user_tokens),
+        )
 }

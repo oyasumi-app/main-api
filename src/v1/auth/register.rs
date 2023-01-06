@@ -36,6 +36,13 @@ pub async fn register(
             id: pending_registration.id,
         }),
         Ok(None) => {
+            // NB: even if the username/email is already taken, we still create a registration request.
+            // This is to prevent enumeration attacks.
+            // make_registration will still create it,
+            // but it will not send the confirmation email;
+            // instead, it will send an email to the owner of the existing account.
+            // This email will not contain the confirmation token,
+            // thus making it impossible to confirm the registration.
             let registration = crate::entity::registration::make_registration(
                 app_state.db,
                 &request.username,

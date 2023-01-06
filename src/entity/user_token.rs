@@ -52,11 +52,11 @@ pub async fn make_token(
     let now = chrono::Utc::now();
     let expires = now + token_expiration();
     let user_token_new = ActiveModel {
+        id: Set(Snowflake::new().await),
         user: Set(user.id),
         token: Set(token.clone()),
         created_by_ip: Set(ip.to_string()),
         expires: Set(expires),
-        ..Default::default()
     };
     user_token_new.insert(db).await?;
     Ok(token)
@@ -104,5 +104,36 @@ pub async fn find_token_by_id(
 
 pub async fn delete_token(db: &DbConn, id: Snowflake) -> Result<(), DbErr> {
     Entity::delete_by_id(id).exec(db).await?;
+    Ok(())
+}
+
+pub async fn find_tokens_by_user(
+    db: &DbConn,
+    user_id: Snowflake,
+) -> Result<Vec<crate::entity::user_token::Model>, DbErr> {
+    let now = chrono::Utc::now();
+    let filter = Entity::find()
+        .filter(Column::User.eq(user_id).and(Column::Expires.gt(now)))
+        .all(db)
+        .await?;
+    Ok(filter)
+}
+
+/// Delete all tokens associated with the given user, except the one with the given ID.
+pub async fn delete_tokens_by_user_except(
+    db: &DbConn,
+    user_id: Snowflake,
+    except_id: Snowflake,
+) -> Result<(), DbErr> {
+    let now = chrono::Utc::now();
+    Entity::delete_many()
+        .filter(
+            Column::User
+                .eq(user_id)
+                .and(Column::Expires.gt(now))
+                .and(Column::Id.ne(except_id)),
+        )
+        .exec(db)
+        .await?;
     Ok(())
 }

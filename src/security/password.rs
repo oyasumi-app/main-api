@@ -5,7 +5,7 @@ use orion::pwhash;
 /// Use this when creating or updating a password.
 pub fn make_hash(password: &str) -> String {
     let pw = pwhash::Password::from_slice(password.as_bytes()).unwrap();
-    let hash = pwhash::hash_password(&pw, 3, 1 << 16).unwrap();
+    let hash = pwhash::hash_password(&pw, 3, 1 << 14).unwrap();
     let hash_str = hash.unprotected_as_encoded();
     hash_str.to_string()
 }
