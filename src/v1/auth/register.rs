@@ -1,23 +1,9 @@
 use axum::{extract::State, Json};
 use axum_client_ip::ClientIp;
 
-use crate::{AppState, Snowflake};
+use crate::AppState;
 
-#[derive(Debug, serde::Deserialize)]
-pub struct RegistrationRequest {
-    username: String,
-    email: String,
-    password: String,
-}
-
-#[derive(Debug, serde::Serialize)]
-#[serde(tag = "status")]
-pub enum RegistrationResponse {
-    Ok { id: Snowflake },
-    PendingRegistrationExists { id: Snowflake },
-    //Err, // TODO: a registration request for an existing username/email MUST NOT be an error (to prevent enumeration attacks)
-    DatabaseError,
-}
+use api_types::v1::register::*;
 
 #[axum_macros::debug_handler]
 pub async fn register(

@@ -1,33 +1,8 @@
 use axum::Json;
 
-use crate::{ExtractUser, Snowflake, User};
+use crate::{ExtractUser, User};
 
-#[derive(Debug, serde::Serialize)]
-#[serde(tag = "status")]
-pub enum CheckResponse {
-    Anonymous,
-    InvalidToken,
-    ValidToken(TokenData),
-}
-
-#[derive(Debug, serde::Serialize)]
-pub struct TokenData {
-    pub user: TokenUserData,
-    pub token: TokenDetails,
-}
-
-#[derive(Debug, serde::Serialize)]
-pub struct TokenUserData {
-    pub id: Snowflake,
-    pub username: String,
-    pub email: String,
-}
-
-#[derive(Debug, serde::Serialize)]
-pub struct TokenDetails {
-    pub id: Snowflake,
-    pub expires: chrono::DateTime<chrono::Utc>,
-}
+use api_types::v1::token_info::*;
 
 pub async fn check(ExtractUser(user): ExtractUser) -> Json<CheckResponse> {
     match user {

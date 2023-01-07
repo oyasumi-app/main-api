@@ -4,8 +4,9 @@ use axum::{
     Json,
 };
 
-use crate::v1::auth::check::{TokenData, TokenDetails, TokenUserData};
 use crate::{entity::user_token, AppState, RequireUser, Snowflake};
+
+use api_types::v1::token_info::*;
 
 pub async fn get_token(
     State(app_state): State<AppState>,

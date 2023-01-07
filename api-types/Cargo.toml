@@ -1,0 +1,16 @@
+[package]
+name = "api-types"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+sea_orm_integration = ["dep:sea-orm"]
+snowflake_create = ["dep:async-std"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+chrono = { version = "0.4" }
+sea-orm = { version = "0.10.3", optional = true }
+async-std = { version = "1", optional = true } 

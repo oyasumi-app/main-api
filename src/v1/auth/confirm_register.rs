@@ -1,27 +1,8 @@
 use axum::{extract::State, Json};
 
-use crate::{AppState, Snowflake};
+use crate::AppState;
 
-#[derive(Debug, serde::Deserialize)]
-pub struct ConfirmRegistrationRequest {
-    id: Snowflake,
-    token: String,
-}
-
-#[derive(Debug, serde::Serialize)]
-#[serde(tag = "status")]
-pub enum ConfirmRegistrationResponse {
-    Ok,
-    DatabaseError,
-    /// This error means that the registration request does not exist or the token is incorrect.
-    RegistrationConfirmError,
-
-    /// This error means that, when we confirmed the registration, a user with
-    /// the same username or email already exists.
-    /// This should not have happened, because we checked for this before creating the registration request.
-    /// Nevertheless, direct the client to restart the registration process.
-    UserAlreadyExists,
-}
+use api_types::v1::confirm_register::*;
 
 #[axum_macros::debug_handler]
 pub async fn confirm_register(

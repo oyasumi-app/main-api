@@ -4,25 +4,7 @@ use crate::core::query;
 use crate::AppState;
 use axum_client_ip::ClientIp;
 
-#[derive(Debug, serde::Deserialize)]
-#[serde(untagged)]
-pub enum LoginRequest {
-    UsernamePassword { username: String, password: String },
-    EmailPassword { email: String, password: String },
-}
-
-#[derive(Debug, serde::Serialize)]
-pub enum LoginResponse {
-    Ok { token: String },
-    Err(LoginError),
-}
-
-#[derive(Debug, serde::Serialize)]
-pub enum LoginError {
-    /// Either the username/email or the password is incorrect
-    /// (not telling which)
-    InvalidCredentials,
-}
+use api_types::v1::login::*;
 
 #[axum_macros::debug_handler]
 pub async fn login(
