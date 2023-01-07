@@ -11,6 +11,6 @@ snowflake_create = ["dep:async-std"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-chrono = { version = "0.4" }
+chrono = { version = "0.4", features = ["serde"] }
 sea-orm = { version = "0.10.3", optional = true }
 async-std = { version = "1", optional = true } 
