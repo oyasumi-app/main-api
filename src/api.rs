@@ -3,6 +3,7 @@ use crate::migration::{Migrator, MigratorTrait};
 
 use axum::middleware::from_fn_with_state;
 use axum::{routing::get, Router};
+
 use std::env;
 use std::net::SocketAddr;
 
@@ -36,8 +37,8 @@ pub async fn main() {
             app_state,
             crate::security::http_auth::auth,
         ))
-        // Allow CORS
-        .layer(tower_http::cors::CorsLayer::permissive());
+        // Allow CORS with any origin and credentials
+        .layer(tower_http::cors::CorsLayer::very_permissive());
     //.layer(middleware::from_fn_async(crate::security::http_auth::auth));
 
     // run our app with hyper
