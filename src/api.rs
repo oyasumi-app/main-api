@@ -35,7 +35,9 @@ pub async fn main() {
         .route_layer(from_fn_with_state(
             app_state,
             crate::security::http_auth::auth,
-        ));
+        ))
+        // Allow CORS
+        .layer(tower_http::cors::CorsLayer::permissive());
     //.layer(middleware::from_fn_async(crate::security::http_auth::auth));
 
     // run our app with hyper
