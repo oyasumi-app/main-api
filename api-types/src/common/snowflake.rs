@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter};
+use std::{fmt::{Display, Formatter}, str::FromStr};
 
 #[cfg(feature="snowflake_create")]
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -85,6 +85,14 @@ impl From<i64> for Snowflake {
 impl Display for Snowflake {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl FromStr for Snowflake {
+    type Err = std::num::ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(Snowflake)
     }
 }
 
