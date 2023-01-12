@@ -6,3 +6,5 @@ pub mod register;
 pub use register::*;
 pub mod token_info;
 pub use token_info::*;
+pub mod event_streams;
+pub use event_streams::*;

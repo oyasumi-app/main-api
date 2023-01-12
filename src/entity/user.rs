@@ -18,6 +18,8 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "crate::entity::user_token::Entity")]
     UserToken,
+    #[sea_orm(has_many = "crate::entity::event_stream::Entity")]
+    EventStream,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
