@@ -41,9 +41,7 @@ pub enum EventStreamPatchResponse {
 impl axum::response::IntoResponse for EventStreamPatchResponse {
     fn into_response(self) -> axum::response::Response {
         match self {
-            EventStreamPatchResponse::Ok => {
-                (axum::http::StatusCode::OK, axum::Json(self)).into_response()
-            }
+            EventStreamPatchResponse::Ok => (axum::http::StatusCode::NO_CONTENT).into_response(),
             EventStreamPatchResponse::IncompatibleEventsFound => {
                 (axum::http::StatusCode::BAD_REQUEST, axum::Json(self)).into_response()
             }

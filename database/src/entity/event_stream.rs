@@ -24,11 +24,20 @@ pub enum Relation {
         to = "crate::entity::user::Column::Id"
     )]
     User,
+
+    #[sea_orm(has_many = "crate::entity::event::Entity")]
+    Event,
 }
 
 impl Related<crate::entity::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
+    }
+}
+
+impl Related<crate::entity::event::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Event.def()
     }
 }
 
@@ -101,8 +110,6 @@ pub async fn patch_by_id(
         Err(DbErr::Custom("Event stream not found".to_string()))
     }
 }
-
-//use ;
 
 pub async fn create(
     db: &DbConn,

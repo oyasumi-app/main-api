@@ -53,7 +53,7 @@ impl MigrationTrait for Migration {
 
 /// Learn more at https://docs.rs/sea-query#iden
 #[derive(Iden)]
-enum EventStream {
+pub enum EventStream {
     Table,
     Id,
     Owner,

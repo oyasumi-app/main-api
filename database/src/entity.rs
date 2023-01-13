@@ -1,3 +1,4 @@
+pub mod event;
 pub mod event_stream;
 pub mod registration;
 pub mod state_change;

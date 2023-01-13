@@ -17,6 +17,7 @@ sea-orm = { version = "0.10.3", optional = true }
 async-std = { version = "1", optional = true }
 strum = { version = "0.24.1", features = ["derive"] }
 axum = { version = "0.6.1", features = ["macros"], optional = true }
+anyhow = "1.0.66"
 
 
 [dev-dependencies]

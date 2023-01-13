@@ -12,9 +12,17 @@ use axum::{
 pub fn get_router() -> Router<AppState> {
     Router::new()
         .route("/", get(list::list_event_streams))
+        .route("/:stream_id/event", post(super::create::create_event))
         .route(
-            "/:id",
+            "/:stream_id/event/:event_id",
+            get(super::get::get_event),
+        )
+
+
+        .route(
+            "/:stream_id",
             get(get::get_event_stream).patch(patch::patch_event_stream),
         )
         .route("/new", post(create::new_event_stream))
-}
+
+    }
