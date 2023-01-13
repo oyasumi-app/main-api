@@ -12,7 +12,7 @@ pub async fn get_event_stream(
     Path(id): Path<Snowflake>,
 ) -> ResultResponse<Json<EventStream>> {
     // Try finding an EventStream by this ID
-    let maybe_event_stream = crate::entity::event_stream::find_by_id(&app_state.db, id).await?;
+    let maybe_event_stream = database::entity::event_stream::find_by_id(&app_state.db, id).await?;
     let event_stream = match maybe_event_stream {
         Some(event_stream) => event_stream,
         None => return Err(ApiError::NotFound)?,

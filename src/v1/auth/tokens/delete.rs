@@ -3,7 +3,8 @@ use axum::{
     http::StatusCode,
 };
 
-use crate::{entity::user_token, AppState, RequireUser, Snowflake};
+use crate::{AppState, RequireUser, Snowflake};
+use database::entity::user_token;
 
 pub async fn delete_token(
     State(app_state): State<AppState>,

@@ -1,20 +1,18 @@
 pub mod event_stream_type;
 
 use crate::Snowflake;
-use serde::{Deserialize, Serialize};
 pub use event_stream_type::EventStreamType;
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EventStream {
     pub id: Snowflake,
     pub owner: Snowflake,
     pub name: String,
-    
+
     #[serde(rename = "type")]
     pub stream_type: EventStreamType,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EventStreamPatchRequest {
@@ -39,7 +37,7 @@ pub enum EventStreamPatchResponse {
     IncompatibleEventsFound,
 }
 
-#[cfg(feature="axum_integration")]
+#[cfg(feature = "axum_integration")]
 impl axum::response::IntoResponse for EventStreamPatchResponse {
     fn into_response(self) -> axum::response::Response {
         match self {
@@ -59,6 +57,9 @@ mod tests {
 
     #[test]
     fn test_event_stream_type_display() {
-        assert_eq!(EventStreamType::StateTransition.to_string(), "StateTransition");
+        assert_eq!(
+            EventStreamType::StateTransition.to_string(),
+            "StateTransition"
+        );
     }
 }

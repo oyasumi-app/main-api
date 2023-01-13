@@ -10,6 +10,6 @@ pub async fn list_event_streams(
     RequireUser((conn_user, _conn_token)): RequireUser,
 ) -> ResultResponse<Json<Vec<EventStream>>> {
     Ok(Json(
-        crate::entity::event_stream::find_by_owner(&app_state.db, conn_user.id).await?,
+        database::entity::event_stream::find_by_owner(&app_state.db, conn_user.id).await?,
     ))
 }

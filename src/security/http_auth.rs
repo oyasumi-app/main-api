@@ -20,7 +20,10 @@ pub enum User {
     ValidToken(ValidToken),
 }
 
-type ValidToken = (crate::entity::user::Model, crate::entity::user_token::Model);
+type ValidToken = (
+    database::entity::user::Model,
+    database::entity::user_token::Model,
+);
 
 pub async fn auth<B>(
     State(app_state): State<crate::AppState>,
@@ -67,7 +70,7 @@ pub async fn auth<B>(
     // Find the token in the database
     let token = token.unwrap();
     let db = &app_state.db;
-    let maybe_token = crate::entity::user_token::find_token(db, &token).await;
+    let maybe_token = database::entity::user_token::find_token(db, &token).await;
 
     if maybe_token.is_err() {
         // Error finding token, return a 500 error

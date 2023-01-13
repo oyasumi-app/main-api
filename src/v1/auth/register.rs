@@ -11,7 +11,7 @@ pub async fn register(
     ClientIp(ip): ClientIp,
     Json(request): Json<RegistrationRequest>,
 ) -> Json<RegistrationResponse> {
-    let pending_registration = crate::entity::registration::find_pending_registration(
+    let pending_registration = database::entity::registration::find_pending_registration(
         &app_state.db,
         &request.username,
         &request.email,
@@ -29,7 +29,7 @@ pub async fn register(
             // instead, it will send an email to the owner of the existing account.
             // This email will not contain the confirmation token,
             // thus making it impossible to confirm the registration.
-            let registration = crate::entity::registration::make_registration(
+            let registration = database::entity::registration::make_registration(
                 app_state.db,
                 &request.username,
                 &request.email,

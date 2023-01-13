@@ -1,19 +1,20 @@
-use std::{fmt::{Display, Formatter}, str::FromStr};
+use std::{
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
 
-#[cfg(feature="snowflake_create")]
+#[cfg(feature = "snowflake_create")]
 use std::time::{SystemTime, UNIX_EPOCH};
 
-
-
-#[cfg(feature="snowflake_create")]
+#[cfg(feature = "snowflake_create")]
 use async_std::sync::Mutex;
 
-#[cfg(feature="sea_orm_integration")]
+#[cfg(feature = "sea_orm_integration")]
 use chrono::{DateTime, Utc};
-#[cfg(feature="sea_orm_integration")]
-use std::time::Duration;
-#[cfg(feature="sea_orm_integration")]
+#[cfg(feature = "sea_orm_integration")]
 use sea_orm::DbErr;
+#[cfg(feature = "sea_orm_integration")]
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
@@ -33,14 +34,14 @@ use serde::{Deserialize, Serialize};
 pub struct Snowflake(i64);
 
 /// A mutex that holds the sequence number counter.
-#[cfg(feature="snowflake_create")]
+#[cfg(feature = "snowflake_create")]
 static SNOWFLAKE_COUNTER: Mutex<u8> = Mutex::new(0);
 
 impl Snowflake {
     /// Create a new Snowflake.
     ///
     /// This function is thread-safe.
-    #[cfg(feature="snowflake_create")]
+    #[cfg(feature = "snowflake_create")]
     pub async fn new() -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -53,7 +54,7 @@ impl Snowflake {
     }
 
     /// Get the timestamp from a Snowflake.
-    #[cfg(feature="sea_orm_integration")]
+    #[cfg(feature = "sea_orm_integration")]
     pub fn timestamp(&self) -> DateTime<Utc> {
         let timestamp = self.0 >> 16;
         let timestamp = UNIX_EPOCH + Duration::from_millis(timestamp.try_into().unwrap());
@@ -81,7 +82,6 @@ impl From<i64> for Snowflake {
     }
 }
 
-
 impl Display for Snowflake {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
@@ -105,8 +105,7 @@ impl From<Snowflake> for sea_orm::Value {
     }
 }
 
-
-#[cfg(feature="sea_orm_integration")]
+#[cfg(feature = "sea_orm_integration")]
 impl sea_orm::sea_query::ValueType for Snowflake {
     fn try_from(v: sea_orm::Value) -> Result<Self, sea_orm::sea_query::ValueTypeErr> {
         match v {
@@ -128,7 +127,7 @@ impl sea_orm::sea_query::ValueType for Snowflake {
     }
 }
 
-#[cfg(feature="sea_orm_integration")]
+#[cfg(feature = "sea_orm_integration")]
 impl sea_orm::TryGetable for Snowflake {
     fn try_get(
         res: &sea_orm::QueryResult,
@@ -139,7 +138,7 @@ impl sea_orm::TryGetable for Snowflake {
     }
 }
 
-#[cfg(feature="sea_orm_integration")]
+#[cfg(feature = "sea_orm_integration")]
 impl sea_orm::TryFromU64 for Snowflake {
     fn try_from_u64(v: u64) -> Result<Self, DbErr> {
         Ok(Snowflake(u64_to_i64(v)))

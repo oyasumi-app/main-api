@@ -1,6 +1,7 @@
 use axum::{extract::State, http::StatusCode, Json};
 
-use crate::{entity::user_token, AppState, RequireUser, Snowflake};
+use crate::{AppState, RequireUser, Snowflake};
+use database::entity::user_token;
 
 pub async fn get_user_tokens(
     State(app_state): State<AppState>,

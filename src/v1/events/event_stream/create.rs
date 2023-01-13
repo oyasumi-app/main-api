@@ -13,12 +13,12 @@ pub async fn new_event_stream(
     RequireUser((conn_user, _conn_token)): RequireUser,
     Json(request): Json<EventStreamCreateRequest>,
 ) -> ResultResponse<(HeaderMap, StatusCode)> {
-    let id = crate::entity::event_stream::create(&app_state.db, conn_user.id, request).await?;
+    let id = database::entity::event_stream::create(&app_state.db, conn_user.id, request).await?;
     // Set Location header to URL to new event stream
     let mut headers = HeaderMap::new();
     headers.insert(
         "Location",
-        format!("/v1/events/stream/{}", id).parse().unwrap(),
+        format!("/v1/events/stream/{id}").parse().unwrap(),
     );
     Ok((headers, StatusCode::CREATED))
 }

@@ -10,7 +10,7 @@ pub async fn confirm_register(
     Json(request): Json<ConfirmRegistrationRequest>,
 ) -> Json<ConfirmRegistrationResponse> {
     let pending_registration =
-        crate::entity::registration::get_by_id(&app_state.db, request.id).await;
+        database::entity::registration::get_by_id(&app_state.db, request.id).await;
     if pending_registration.is_err() {
         return Json(ConfirmRegistrationResponse::DatabaseError);
     }
@@ -29,7 +29,8 @@ pub async fn confirm_register(
     // But check if the username/email is already taken.
     // (Normally this should not happen, but if it does, we should not allow the registration.)
     let user =
-        crate::entity::user::find_by_username(&app_state.db, &pending_registration.username).await;
+        database::entity::user::find_by_username(&app_state.db, &pending_registration.username)
+            .await;
     if user.is_err() {
         return Json(ConfirmRegistrationResponse::DatabaseError);
     }
@@ -37,7 +38,8 @@ pub async fn confirm_register(
     if user.is_some() {
         return Json(ConfirmRegistrationResponse::UserAlreadyExists);
     }
-    let user = crate::entity::user::find_by_email(&app_state.db, &pending_registration.email).await;
+    let user =
+        database::entity::user::find_by_email(&app_state.db, &pending_registration.email).await;
     if user.is_err() {
         return Json(ConfirmRegistrationResponse::DatabaseError);
     }
@@ -48,7 +50,7 @@ pub async fn confirm_register(
 
     // Now we can create the user.
     let user_creation =
-        crate::entity::registration::upgrade_to_user(&app_state.db, &pending_registration).await;
+        database::entity::registration::upgrade_to_user(&app_state.db, &pending_registration).await;
     if user_creation.is_err() {
         Json(ConfirmRegistrationResponse::DatabaseError)
     } else {

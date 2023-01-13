@@ -1,8 +1,8 @@
 use axum::extract::{Json, State};
 
-use crate::core::query;
 use crate::AppState;
 use axum_client_ip::ClientIp;
+use database::core::query;
 
 use api_types::v1::login::*;
 
@@ -37,13 +37,13 @@ pub async fn login(
 
     let user = user.unwrap();
 
-    let token = crate::entity::user_token::make_token(&app_state.db, &user, &ip)
+    let token = database::entity::user_token::make_token(&app_state.db, &user, &ip)
         .await
         .unwrap();
 
     headers.insert(
         axum::http::header::SET_COOKIE,
-        axum::http::HeaderValue::from_str(&format!("Token={}", token)).unwrap(),
+        axum::http::HeaderValue::from_str(&format!("Token={token}")).unwrap(),
     );
 
     (headers, Json(LoginResponse::Ok { token }))

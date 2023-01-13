@@ -1,5 +1,4 @@
-use crate::core::sea_orm::{Database, DatabaseConnection};
-use crate::migration::{Migrator, MigratorTrait};
+use database::core::sea_orm::DatabaseConnection;
 
 use axum::middleware::from_fn_with_state;
 use axum::{routing::get, Router};
@@ -20,10 +19,7 @@ pub async fn main() {
     dotenvy::dotenv().ok();
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
 
-    let conn = Database::connect(db_url)
-        .await
-        .expect("Database connection failed");
-    Migrator::up(&conn, None).await.unwrap();
+    let conn = database::connect(&db_url).await;
 
     let app_state = AppState { db: conn };
 

@@ -47,10 +47,7 @@ impl From<Model> for api_types::v1::EventStream {
         }
     }
 }
-pub async fn find_model_by_id(
-    db: &DbConn,
-    id: Snowflake,
-) -> Result<Option<Model>, DbErr> {
+pub async fn find_model_by_id(db: &DbConn, id: Snowflake) -> Result<Option<Model>, DbErr> {
     let event_stream = Entity::find_by_id(id).one(db).await?;
     match event_stream {
         Some(event_stream) => Ok(Some(event_stream)),
@@ -80,7 +77,11 @@ pub async fn find_by_owner(
         .collect())
 }
 
-pub async fn patch_by_id(db: &DbConn, id: Snowflake, patch: EventStreamPatchRequest) -> Result<(), DbErr> {
+pub async fn patch_by_id(
+    db: &DbConn,
+    id: Snowflake,
+    patch: EventStreamPatchRequest,
+) -> Result<(), DbErr> {
     let event_stream = find_model_by_id(db, id).await?;
     if let Some(event_stream) = event_stream {
         let mut active_model: ActiveModel = event_stream.into();
