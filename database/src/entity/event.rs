@@ -1,5 +1,5 @@
 use api_types::v1::UnparsedEvent;
-use sea_orm::{entity::prelude::*, Set};
+use sea_orm::{entity::prelude::*, QueryOrder, QuerySelect, Set};
 use serde::{Deserialize, Serialize};
 
 use crate::Snowflake;
@@ -34,17 +34,6 @@ impl Related<crate::entity::event_stream::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
-
-impl Into<UnparsedEvent> for Model {
-    fn into(self) -> UnparsedEvent {
-        UnparsedEvent {
-            id: self.id,
-            stream_id: self.stream,
-            when: self.when,
-            data: self.data,
-        }
-    }
-}
 
 pub async fn find_model_by_id(db: &DbConn, id: Snowflake) -> Result<Option<Model>, DbErr> {
     let event_stream = Entity::find_by_id(id).one(db).await?;
@@ -87,5 +76,40 @@ pub async fn find_with_stream(
             "Missing EventStream for valid Event?!".to_string(),
         )),
         None => Ok(None),
+    }
+}
+
+pub async fn list_by_stream(
+    db: &DbConn,
+    stream_id: Snowflake,
+    limit: u64,
+    since: Snowflake,
+) -> Result<Vec<Model>, DbErr> {
+    let filter = Entity::find()
+        .order_by_asc(Column::When)
+        .filter(Column::Stream.eq(stream_id))
+        .filter(Column::Id.gte(since))
+        .limit(limit)
+        .all(db)
+        .await?;
+    Ok(filter)
+}
+
+pub async fn count_by_stream(db: &DbConn, stream_id: Snowflake) -> Result<u64, DbErr> {
+    let filter = Entity::find()
+        .filter(Column::Stream.eq(stream_id))
+        .count(db)
+        .await?;
+    Ok(filter)
+}
+
+impl From<Model> for UnparsedEvent {
+    fn from(event: Model) -> Self {
+        UnparsedEvent {
+            id: event.id,
+            stream_id: event.stream,
+            when: event.when,
+            data: event.data,
+        }
     }
 }

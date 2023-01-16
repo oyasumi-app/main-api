@@ -26,7 +26,7 @@ pub struct ParsedEvent {
 
 impl ParsedEvent {
     pub fn try_from_unparsed(
-        unparsed: UnparsedEvent,
+        unparsed: &UnparsedEvent,
         event_type: EventStreamType,
     ) -> anyhow::Result<Self> {
         Ok(Self {
@@ -84,4 +84,10 @@ impl axum::response::IntoResponse for EventCreateResponse {
             }
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EventListResponse {
+    pub total_count: u64,
+    pub events: Vec<ParsedEvent>,
 }

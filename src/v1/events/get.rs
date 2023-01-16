@@ -41,7 +41,7 @@ pub async fn get_event(
     };
 
     let unparsed_event: UnparsedEvent = event.into();
-    let parsed_event = ParsedEvent::try_from_unparsed(unparsed_event, stream_type)?;
+    let parsed_event = ParsedEvent::try_from_unparsed(&unparsed_event, stream_type)?;
 
     Ok(Json(parsed_event))
 }
