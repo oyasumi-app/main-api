@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 
+use crate::utils::Anonymized;
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LoginRequest {
-    UsernamePassword { username: String, password: String },
-    EmailPassword { email: String, password: String },
+    UsernamePassword { username: String, password: Anonymized<String> },
+    EmailPassword { email: String, password: Anonymized<String> },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
