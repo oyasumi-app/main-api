@@ -10,20 +10,20 @@ pub enum CheckResponse {
     ValidToken(TokenData),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TokenData {
     pub user: TokenUserData,
     pub token: TokenDetails,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TokenUserData {
     pub id: Snowflake,
     pub username: String,
     pub email: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TokenDetails {
     pub id: Snowflake,
     pub expires: chrono::DateTime<chrono::Utc>,
