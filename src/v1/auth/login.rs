@@ -43,7 +43,7 @@ pub async fn login(
 
     headers.insert(
         axum::http::header::SET_COOKIE,
-        axum::http::HeaderValue::from_str(&format!("Token={token}")).unwrap(),
+        axum::http::HeaderValue::from_str(&format!("Token={token}; Path=/")).unwrap(),
     );
 
     (headers, Json(LoginResponse::Ok { token }))

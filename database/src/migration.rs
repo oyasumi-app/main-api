@@ -7,6 +7,7 @@ mod m2023_01_04_001_create_registration_table;
 mod m2023_01_10_001_delete_mode_switch_table;
 mod m2023_01_12_001_create_event_stream_table;
 mod m2023_01_13_001_create_event_table;
+mod m2023_02_01_delete_events_tables;
 
 pub struct Migrator;
 
@@ -21,6 +22,7 @@ impl MigratorTrait for Migrator {
             Box::new(m2023_01_10_001_delete_mode_switch_table::Migration),
             Box::new(m2023_01_12_001_create_event_stream_table::Migration),
             Box::new(m2023_01_13_001_create_event_table::Migration),
+            Box::new(m2023_02_01_delete_events_tables::Migration),
         ]
     }
 }
