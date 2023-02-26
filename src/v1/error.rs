@@ -15,7 +15,7 @@ impl axum::response::IntoResponse for ResponseError {
                 ApiError::DatabaseErr(_) => StatusCode::INTERNAL_SERVER_ERROR,
                 ApiError::NotFound => StatusCode::NOT_FOUND,
                 ApiError::Forbidden => StatusCode::FORBIDDEN,
-                ApiError::NeverError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+                ApiError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             }
         } else {
             StatusCode::INTERNAL_SERVER_ERROR
@@ -36,7 +36,7 @@ pub enum ApiError {
     DatabaseErr(sea_orm::DbErr),
 
     #[error("this should never happen (please report a bug!): {0}")]
-    NeverError(String),
+    UnexpectedError(String),
 
     #[error("entity not found")]
     NotFound,

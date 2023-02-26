@@ -1,11 +1,13 @@
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Json,
 };
 use axum_client_ip::ClientIp;
 
-use crate::AppState;
+use crate::{
+    v1::{ApiError, ResultResponse},
+    AppState,
+};
 
 use api_types::{v1::register::*, Snowflake};
 
@@ -56,36 +58,32 @@ pub async fn make_registration(
 pub async fn get_registration(
     State(app_state): State<AppState>,
     Path(registration_id): Path<Snowflake>,
-) -> (StatusCode, Json<PendingRegistrationDataResponse>) {
-    let pending_registration = database::entity::registration::get_by_id(
-        &app_state.db,
-        registration_id
-    )
-    .await;
+) -> ResultResponse<Json<PendingRegistration>> {
+    let pending_registration =
+        database::entity::registration::get_by_id(&app_state.db, registration_id).await;
     match pending_registration {
-        Ok(None) => (
-            StatusCode::NOT_FOUND,
-            Json(PendingRegistrationDataResponse::DoesNotExist),
-        ),
+        Ok(None) => Err(ApiError::NotFound.into()),
         Ok(Some(reg)) => {
             let email = match reg.email.parse() {
                 Ok(email) => email,
                 Err(err) => {
-                    tracing::error!("Error parsing email from database?! {}", err);
-                    return (StatusCode::INTERNAL_SERVER_ERROR, Json(PendingRegistrationDataResponse::DatabaseError));
+                    tracing::error!(
+                        "Error parsing email {:?} from registration {} from database?! {}",
+                        reg.email,
+                        registration_id,
+                        err
+                    );
+                    return Err(ApiError::UnexpectedError(format!("Could not parse email as lettre::Address in registration {} (email is {:?})", registration_id, reg.email)).into());
                 }
             };
             let reg = PendingRegistration {
                 username: reg.username,
-                email: email,
+                email,
                 can_resend_email_after: reg.email_resend_after,
                 expires_after: reg.expires,
             };
-            (StatusCode::OK, Json(PendingRegistrationDataResponse::Exists(reg)))
+            Ok(Json(reg))
         }
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(PendingRegistrationDataResponse::DatabaseError),
-        ),
+        Err(err) => Err(err.into()),
     }
 }

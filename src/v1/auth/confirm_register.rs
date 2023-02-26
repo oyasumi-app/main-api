@@ -1,5 +1,7 @@
-
-use axum::{extract::{State, Path}, Json};
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 
 use crate::AppState;
 

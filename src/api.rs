@@ -18,7 +18,7 @@ pub async fn main() {
     dotenvy::dotenv().ok();
     let db_url = std::env!("DATABASE_URL");
 
-    let conn = database::connect(&db_url).await;
+    let conn = database::connect(db_url).await;
 
     let app_state = AppState { db: conn };
 
