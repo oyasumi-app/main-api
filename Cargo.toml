@@ -10,11 +10,13 @@ members = [
     ".",
     "api-types",
     "database",
+    "mail",
 ]
 
 [[bin]]
 name = "main-api"
 path = "src/main.rs"
+
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
@@ -37,6 +39,7 @@ axum-macros = "0.3.0"
 api-types = { path = "api-types", features = ["snowflake_create", "sea_orm_integration", "axum_integration"] }
 database = { path = "database" }
 thiserror = "1.0.38"
+mail = { path = "mail" }
 
 [dependencies.sea-orm]
 version = "0.10.3" # sea-orm version

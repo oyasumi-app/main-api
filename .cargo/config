@@ -1,2 +1,8 @@
 [build]
 target = "x86_64-unknown-linux-musl"
+
+[env]
+DATABASE_URL="sqlite://./database.sqlite"
+MAIL_SERVER_HOST="mail.oyasumi.app"
+MAIL_NOREPLY_ACCOUNT="noreply@oyasumi.app"
+MAIL_NOREPLY_PASSWORD="password"

@@ -1,16 +1,18 @@
-use axum::{extract::State, Json};
+
+use axum::{extract::{State, Path}, Json};
 
 use crate::AppState;
 
-use api_types::v1::confirm_register::*;
+use api_types::{v1::confirm_register::*, Snowflake};
 
 #[axum_macros::debug_handler]
-pub async fn confirm_register(
+pub async fn confirm_registration(
     State(app_state): State<AppState>,
+    Path(reg_id): Path<Snowflake>,
     Json(request): Json<ConfirmRegistrationRequest>,
 ) -> Json<ConfirmRegistrationResponse> {
     let pending_registration =
-        database::entity::registration::get_by_id(&app_state.db, request.id).await;
+        database::entity::registration::get_by_id(&app_state.db, reg_id).await;
     if pending_registration.is_err() {
         return Json(ConfirmRegistrationResponse::DatabaseError);
     }

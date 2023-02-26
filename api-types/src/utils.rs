@@ -1,9 +1,12 @@
-use std::{ops::{Deref, DerefMut}, fmt::{Formatter, Debug}};
+use std::{
+    fmt::{Debug, Formatter},
+    ops::{Deref, DerefMut},
+};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Struct for anonymizing the value of a field in debug output.
-/// 
+///
 /// `Anonymized<T>` behaves like `T` in all ways except for `Debug` output.
 /// Its `Debug` output is a string of the form `Anonymized::<T>(...)`.
 /// This is useful for showing structs with sensitive info (like passwords)
@@ -70,4 +73,3 @@ where
         self.0.eq(&other.0)
     }
 }
-

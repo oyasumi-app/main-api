@@ -1,9 +1,9 @@
 mod login;
 use login::login;
 mod register;
-use register::register;
+use register::{get_registration, make_registration};
 mod confirm_register;
-use confirm_register::confirm_register;
+use confirm_register::confirm_registration;
 mod tokens;
 //use tokens::{get_token, delete_token};
 mod check;
@@ -18,8 +18,9 @@ use axum::{
 pub fn get_router() -> Router<AppState> {
     Router::new()
         .route("/login", post(login))
-        .route("/register", post(register))
-        .route("/confirm_register", post(confirm_register))
+        .route("/registration", post(make_registration))
+        .route("/registration/:id", get(get_registration))
+        .route("/registration/:id/confirm", post(confirm_registration))
         .route("/check", get(check))
         .route(
             "/token/by_id/:id",

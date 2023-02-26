@@ -3,7 +3,6 @@ use database::core::sea_orm::DatabaseConnection;
 use axum::middleware::from_fn_with_state;
 use axum::{routing::get, Router};
 
-use std::env;
 use std::net::SocketAddr;
 
 #[derive(Clone)]
@@ -17,7 +16,7 @@ pub async fn main() {
     tracing_subscriber::fmt::init();
 
     dotenvy::dotenv().ok();
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+    let db_url = std::env!("DATABASE_URL");
 
     let conn = database::connect(&db_url).await;
 

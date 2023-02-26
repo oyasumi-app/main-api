@@ -11,21 +11,16 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
+            .drop_table(Table::drop().table(Event::Table).if_exists().to_owned())
+            .await?;
+        manager
             .drop_table(
                 Table::drop()
-                    .table(Event::Table)
+                    .table(EventStream::Table)
                     .if_exists()
                     .to_owned(),
             )
             .await?;
-        manager.drop_table(
-            Table::drop()
-                .table(EventStream::Table)
-                .if_exists()
-                .to_owned(),
-        ).await?;
         Ok(())
     }
-
 }
-

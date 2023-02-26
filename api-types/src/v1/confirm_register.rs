@@ -1,9 +1,7 @@
-use crate::Snowflake;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfirmRegistrationRequest {
-    pub id: Snowflake,
     pub token: String,
 }
 

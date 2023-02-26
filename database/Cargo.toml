@@ -18,6 +18,8 @@ api-types = { path = "../api-types", features = ["snowflake_create", "sea_orm_in
 thiserror = "1.0.38"
 rand = "0.8.5"
 orion = "0.17.3"
+mail = { path = "../mail" }
+lettre = { version = "0.10", default-features = false }
 
 
 [dependencies.sea-orm]

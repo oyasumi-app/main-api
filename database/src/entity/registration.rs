@@ -39,14 +39,14 @@ const TOKEN_LENGTH: u16 = 32;
 pub async fn find_pending_registration(
     db: &DbConn,
     username: &str,
-    email: &str,
+    email: &lettre::Address,
 ) -> Result<Option<Model>, DbErr> {
     let now = chrono::Utc::now();
     let filter = Entity::find()
         .filter(
             Column::Username
                 .eq(username)
-                .or(Column::Email.eq(email))
+                .or(Column::Email.eq(email.to_string()))
                 .and(Column::Expires.gt(now)),
         )
         .one(db)
@@ -57,7 +57,7 @@ pub async fn find_pending_registration(
 pub async fn make_registration(
     db: DbConn,
     username: &str,
-    email: &str,
+    email: lettre::Address,
     password: &str,
     ip: &IpAddr,
 ) -> Result<Snowflake, DbErr> {
@@ -77,8 +77,17 @@ pub async fn make_registration(
         email_resend_after: Set(now + email_resend_after()),
     };
     registration_new.insert(&db).await?;
-    // TODO: Send email
-    Ok(snowflake)
+
+    let message = mail::templates::registration::make_registration_confirm_email(email, &token);
+    let status = mail::delivery::send_message(message).await;
+    match status {
+        Ok(_) => Ok(snowflake),
+        Err(error) => {
+            tracing::error!("Error while sending message: {:?}", error);
+            // TODO: figure out if error is temporary or permanent, and maybe error out if permanent
+            Ok(snowflake)
+        }
+    }
 }
 
 pub async fn get_by_id(db: &DbConn, id: Snowflake) -> Result<Option<Model>, DbErr> {
