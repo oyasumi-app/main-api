@@ -5,10 +5,6 @@ use crate::utils::Anonymized;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LoginRequest {
-    UsernamePassword {
-        username: String,
-        password: Anonymized<String>,
-    },
     EmailPassword {
         email: String,
         password: Anonymized<String>,

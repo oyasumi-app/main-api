@@ -1,7 +1,7 @@
 mod login;
 use login::login;
 mod register;
-use register::{get_registration, make_registration};
+use register::{get_registration, make_registration, resend_confirm_email};
 mod confirm_register;
 use confirm_register::confirm_registration;
 mod tokens;
@@ -21,6 +21,7 @@ pub fn get_router() -> Router<AppState> {
         .route("/registration", post(make_registration))
         .route("/registration/:id", get(get_registration))
         .route("/registration/:id/confirm", post(confirm_registration))
+        .route("/registration/:id/resend", post(resend_confirm_email))
         .route("/check", get(check))
         .route(
             "/token/by_id/:id",

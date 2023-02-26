@@ -3,7 +3,6 @@ use sea_orm::*;
 pub struct Query;
 
 pub enum LoginIdentifier {
-    Username(String),
     Email(String),
 }
 
@@ -16,11 +15,6 @@ impl Query {
         // Option is returned to avoid user enumeration
         // First find the user entity
         let user = match login {
-            LoginIdentifier::Username(username) => crate::entity::user::Entity::find()
-                .filter(crate::entity::user::Column::Username.eq(username))
-                .one(db)
-                .await
-                .ok()?,
             LoginIdentifier::Email(email) => crate::entity::user::Entity::find()
                 .filter(crate::entity::user::Column::Email.eq(email))
                 .one(db)

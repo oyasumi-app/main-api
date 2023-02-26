@@ -16,10 +16,6 @@ pub async fn login(
     let pw;
     let mut headers = axum::http::HeaderMap::new();
     match request {
-        LoginRequest::UsernamePassword { username, password } => {
-            login_id = query::LoginIdentifier::Username(username);
-            pw = password;
-        }
         LoginRequest::EmailPassword { email, password } => {
             login_id = query::LoginIdentifier::Email(email);
             pw = password;

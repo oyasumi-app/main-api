@@ -1,10 +1,12 @@
-use std::net::IpAddr;
+use std::{net::IpAddr, time::SystemTime};
 
 use chrono::Duration;
-use sea_orm::{entity::prelude::*, Set, TransactionTrait};
+use sea_orm::{entity::prelude::*, IntoActiveModel, Set, TransactionTrait};
 use serde::{Deserialize, Serialize};
 
 use crate::Snowflake;
+
+use super::user;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "registration")]
@@ -78,14 +80,76 @@ pub async fn make_registration(
     };
     registration_new.insert(&db).await?;
 
-    let message = mail::templates::registration::make_registration_confirm_email(email, &token);
+    // Check if there is a user already registered for this username, and for this address.
+    // If there is a user for this email address, send a message to that email address.
+    // If there is a user for this username,
+
+    let email_str = email.to_string();
+    let user = user::find_by_email(&db, &email_str).await?;
+    if user.is_none() {
+        let message = mail::templates::registration::make_registration_confirm_email(email, &token);
+        let status = mail::delivery::send_message(message).await;
+        match status {
+            Ok(_) => Ok(snowflake),
+            Err(error) => {
+                tracing::error!("Error while sending message: {:?}", error);
+                // TODO: figure out if error is temporary or permanent, and maybe error out if permanent
+                Ok(snowflake)
+            }
+        }
+    } else {
+        // This is where we need to send the email that does not contain the token.
+        let message = mail::templates::registration::make_duplicate_registration_email(email);
+        let status = mail::delivery::send_message(message).await;
+        match status {
+            Ok(_) => Ok(snowflake),
+            Err(error) => {
+                tracing::error!("Error while sending message: {:?}", error);
+                // TODO: figure out if error is temporary or permanent, and maybe error out if permanent
+                Ok(snowflake)
+            }
+        }
+    }
+}
+
+pub async fn resend_confirmation_email_by_model(
+    db: &DbConn,
+    registration: &Model,
+) -> Result<Result<(), lettre::transport::smtp::Error>, DbErr> {
+    let email: lettre::Address = registration
+        .email
+        .parse()
+        .expect("Failed to parse email from database?!");
+    let message = mail::templates::registration::make_registration_confirm_email(
+        email.clone(),
+        &registration.confirm_token,
+    );
     let status = mail::delivery::send_message(message).await;
+
+    let now: DateTimeUtc = SystemTime::now().into();
+
     match status {
-        Ok(_) => Ok(snowflake),
+        Ok(_) => {
+            // Update the repeat timer
+            let mut active_model = registration.clone().into_active_model();
+            active_model.email_resend_after = Set(now + email_resend_after());
+            active_model.save(db).await?;
+            Ok(Ok(()))
+        }
         Err(error) => {
-            tracing::error!("Error while sending message: {:?}", error);
-            // TODO: figure out if error is temporary or permanent, and maybe error out if permanent
-            Ok(snowflake)
+            tracing::error!(
+                "Failed to send repeat confirmation for email {:?} for registration {}: {:?}",
+                email,
+                registration.id,
+                error
+            );
+
+            // Update the repeat timer anyway (TODO: figure out whether the error is on our side, and do not resend if so)
+            let mut active_model = registration.clone().into_active_model();
+            active_model.email_resend_after = Set(now + email_resend_after());
+            active_model.save(db).await?;
+
+            Ok(Err(error))
         }
     }
 }

@@ -1,8 +1,13 @@
+use std::time::SystemTime;
+
 use axum::{
     extract::{Path, State},
+    http::StatusCode,
     Json,
 };
 use axum_client_ip::ClientIp;
+use database::entity::registration::resend_confirmation_email_by_model;
+use sea_orm::prelude::DateTimeUtc;
 
 use crate::{
     v1::{ApiError, ResultResponse},
@@ -86,4 +91,42 @@ pub async fn get_registration(
         }
         Err(err) => Err(err.into()),
     }
+}
+
+#[axum_macros::debug_handler]
+pub async fn resend_confirm_email(
+    State(app_state): State<AppState>,
+    Path(registration_id): Path<Snowflake>,
+) -> ResultResponse<(StatusCode, Json<ResendConfirmationResponse>)> {
+    // Get the registration by id, bail early if not found
+    let pending_registration =
+        database::entity::registration::get_by_id(&app_state.db, registration_id).await;
+    let registration = match pending_registration {
+        Ok(None) => return Err(ApiError::NotFound.into()),
+        Err(err) => return Err(err.into()),
+        Ok(Some(reg)) => reg,
+    };
+
+    // Check if we are now after the retry time
+    let now: DateTimeUtc = SystemTime::now().into();
+    if registration.email_resend_after < now {
+        return Ok((
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ResendConfirmationResponse::TooEarly),
+        ));
+    }
+
+    // Try resending the email
+    match resend_confirmation_email_by_model(&app_state.db, &registration).await {
+        Err(db_err) => return Err(db_err.into()),
+        Ok(Err(email_err)) => {
+            return Ok((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ResendConfirmationResponse::SendingError {
+                    error: email_err.to_string(),
+                }),
+            ))
+        }
+        Ok(Ok(_)) => return Ok((StatusCode::OK, Json(ResendConfirmationResponse::Ok))),
+    };
 }

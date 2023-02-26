@@ -19,21 +19,26 @@ pub enum RegistrationResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "status")]
-pub enum PendingRegistrationDataResponse {
-    /// The pending registration with this ID does not exist.
-    /// Either it never did, or it has expired, or it has been already completed and promoted to a user.
-    DoesNotExist,
-    /// The pending registration exists, and here is its state.
-    Exists(PendingRegistration),
-
-    DatabaseError,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct PendingRegistration {
     pub username: String,
     pub email: lettre::Address,
     pub can_resend_email_after: chrono::DateTime<chrono::Utc>,
     pub expires_after: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "status")]
+pub enum ResendConfirmationResponse {
+    /// The confirmation was resent.
+    /// That is, the mail server has told us that it has sent the message.
+    Ok,
+
+    /// There was an error while sending the message, and its string representation is included.
+    ///
+    /// Note that the request may or may not be retried immediately after this;
+    /// check the registration info to make sure.
+    SendingError { error: String },
+
+    /// It is too early to resend the message. Check the registration info to know when you should try again.
+    TooEarly,
 }
