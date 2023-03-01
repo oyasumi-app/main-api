@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Snowflake;
 
-use super::user;
+use super::{user, user_token};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "registration")]
@@ -163,18 +163,32 @@ pub async fn get_by_id(db: &DbConn, id: Snowflake) -> Result<Option<Model>, DbEr
     Ok(filter)
 }
 
-pub async fn upgrade_to_user(db: &DbConn, registration: &Model) -> Result<(), DbErr> {
-    // Transactionally delete the registration and create the user
+pub async fn upgrade_to_user(db: &DbConn, registration: &Model) -> Result<String, DbErr> {
+    // Transactionally delete the registration and create the user. Return the instance of the new token created for the user.
     let tx = db.begin().await?;
+    // Delete registration
     let registration_to_delete = registration.clone();
     registration_to_delete.delete(&tx).await?;
+    // Create user
     let user_new = crate::entity::user::ActiveModel {
         id: Set(registration.id),
         username: Set(registration.username.clone()),
         email: Set(registration.email.clone()),
         password_hash: Set(registration.password_hash.clone()),
     };
-    user_new.insert(&tx).await?;
+    let created_user = user_new.insert(&tx).await?;
+
+    // Make token
+    let new_token = user_token::make_token(
+        &tx,
+        &created_user,
+        &registration
+            .created_by_ip
+            .parse()
+            .unwrap_or(IpAddr::V4(std::net::Ipv4Addr::new(0, 0, 0, 0))), // This is not expected to fail because it comes from the database
+    )
+    .await?;
+
     tx.commit().await?;
-    Ok(())
+    Ok(new_token)
 }

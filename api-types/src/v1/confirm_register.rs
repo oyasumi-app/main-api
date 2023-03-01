@@ -8,7 +8,9 @@ pub struct ConfirmRegistrationRequest {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "status")]
 pub enum ConfirmRegistrationResponse {
-    Ok,
+    Ok {
+        token: String,
+    },
     DatabaseError,
     /// This error means that the registration request does not exist or the token is incorrect.
     RegistrationConfirmError,

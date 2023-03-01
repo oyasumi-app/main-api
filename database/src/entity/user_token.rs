@@ -44,7 +44,7 @@ fn token_expiration() -> Duration {
 }
 
 pub async fn make_token(
-    db: &DbConn,
+    db: &impl ConnectionTrait,
     user: &crate::entity::user::Model,
     ip: &IpAddr,
 ) -> Result<String, DbErr> {
