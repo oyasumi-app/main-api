@@ -1,29 +1,36 @@
 use axum::{extract::State, http::StatusCode, Json};
+use sqlx::query;
 
-use crate::{AppState, RequireUser, Snowflake};
-use database::entity::user_token;
+use crate::{v1::ResultResponse, AppState, RequireUser, Snowflake};
 
 pub async fn get_user_tokens(
     State(app_state): State<AppState>,
     RequireUser((conn_user, _conn_token)): RequireUser,
-) -> Json<Vec<Snowflake>> {
-    Json(
-        user_token::find_tokens_by_user(&app_state.db, conn_user.id)
-            .await
-            .unwrap_or_default()
-            .into_iter()
-            .map(|token| token.id)
-            .collect(),
+) -> ResultResponse<Json<Vec<Snowflake>>> {
+    let now = chrono::Utc::now().timestamp();
+    let token_ids = query!(
+        "SELECT id FROM user_token WHERE user_id=? AND expires_unix_time > ?",
+        conn_user.id,
+        now
     )
+    .fetch_all(&app_state.db)
+    .await?
+    .iter()
+    .map(|row| row.id.into())
+    .collect();
+    Ok(Json(token_ids))
 }
 
 pub async fn delete_user_tokens(
     State(app_state): State<AppState>,
     RequireUser((conn_user, conn_token)): RequireUser,
-) -> Result<StatusCode, StatusCode> {
-    match user_token::delete_tokens_by_user_except(&app_state.db, conn_user.id, conn_token.id).await
-    {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+) -> ResultResponse<StatusCode> {
+    query!(
+        "DELETE FROM user_token WHERE user_id=? AND id!=?",
+        conn_user.id,
+        conn_token.id
+    )
+    .execute(&app_state.db)
+    .await?;
+    Ok(StatusCode::NO_CONTENT)
 }

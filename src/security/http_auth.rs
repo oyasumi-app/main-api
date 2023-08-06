@@ -1,11 +1,16 @@
 use std::collections::HashMap;
 
+use api_types::Snowflake;
 use axum::{
     extract::{FromRequestParts, Query, State},
     http::{request::Parts, HeaderMap, Request, StatusCode},
     middleware::Next,
     response::Response,
 };
+use chrono::{DateTime, Utc};
+use sqlx::query;
+
+use crate::datetime_utc_from_timestamp;
 
 /// Module for dealing with authentication tokens
 
@@ -14,16 +19,29 @@ use axum::{
 /// an invalid token,
 /// or a valid token and the associated user.
 #[derive(Debug, Clone)] // Do not derive serde::Serialize -- this contains sensitive information
-pub enum User {
+pub enum LoginState {
     Anonymous,
     InvalidToken,
     ValidToken(ValidToken),
 }
 
-type ValidToken = (
-    database::entity::user::Model,
-    database::entity::user_token::Model,
-);
+#[derive(Debug, Clone)]
+pub struct User {
+    pub id: Snowflake,
+    pub username: String,
+    pub email: String,
+    pub password_hash: String,
+}
+#[derive(Debug, Clone)]
+pub struct UserToken {
+    pub id: Snowflake,
+    pub token: String,
+    pub user_id: Snowflake,
+    pub created_by_ip: String,
+    pub expires: DateTime<Utc>,
+}
+
+type ValidToken = (User, UserToken);
 
 pub async fn auth<B>(
     State(app_state): State<crate::AppState>,
@@ -63,35 +81,62 @@ pub async fn auth<B>(
 
     if token.is_none() {
         // No token was found, return the anonymous user
-        req.extensions_mut().insert(User::Anonymous);
+        req.extensions_mut().insert(LoginState::Anonymous);
         return Ok(next.run(req).await);
     }
 
     // Find the token in the database
     let token = token.unwrap();
     let db = &app_state.db;
-    let maybe_token = database::entity::user_token::find_token(db, &token).await;
+    let row = query!(
+        r#"SELECT
+            user_token.id as "user_token_id: Snowflake",
+            user_token.token,
+            user_token.user_id as "user_id: Snowflake",
+            user_token.created_by_ip,
+            user_token.expires_unix_time,
+            user.username,
+            user.email,
+            user.password_hash
+        FROM user_token INNER JOIN user ON user.id = user_token.user_id WHERE token=?"#,
+        token
+    )
+    .fetch_optional(db)
+    .await;
 
-    if maybe_token.is_err() {
-        // Error finding token, return a 500 error
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-    let maybe_token = maybe_token.unwrap();
+    let row = match row {
+        Ok(row) => row,
+        Err(_e) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+    };
 
-    if maybe_token.is_none() {
+    if row.is_none() {
         // Token not found, return the invalid token user
-        req.extensions_mut().insert(User::InvalidToken);
+        req.extensions_mut().insert(LoginState::InvalidToken);
         return Ok(next.run(req).await);
     } else {
         // Token found, return the valid token user
-        let (token, user) = maybe_token.unwrap();
-        req.extensions_mut().insert(User::ValidToken((user, token)));
+        let row = row.unwrap();
+        let user = User {
+            id: row.user_id,
+            username: row.username,
+            email: row.email,
+            password_hash: row.password_hash,
+        };
+        let token = UserToken {
+            id: row.user_token_id,
+            token: row.token,
+            user_id: row.user_id,
+            created_by_ip: row.created_by_ip,
+            expires: datetime_utc_from_timestamp(row.expires_unix_time),
+        };
+        req.extensions_mut()
+            .insert(LoginState::ValidToken((user, token)));
         return Ok(next.run(req).await);
     }
 }
 
 /// Extractor to get the user from the request
-pub struct ExtractUser(pub User);
+pub struct ExtractUser(pub LoginState);
 
 #[async_trait::async_trait]
 impl<S> FromRequestParts<S> for ExtractUser
@@ -101,7 +146,7 @@ where
     type Rejection = StatusCode;
 
     async fn from_request_parts(req: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let user = req.extensions.get::<User>().unwrap().clone();
+        let user = req.extensions.get::<LoginState>().unwrap().clone();
         Ok(ExtractUser(user))
     }
 }
@@ -117,10 +162,10 @@ where
     type Rejection = StatusCode;
 
     async fn from_request_parts(req: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let user = req.extensions.get::<User>().unwrap().clone();
+        let user = req.extensions.get::<LoginState>().unwrap().clone();
         match user {
-            User::Anonymous | User::InvalidToken => Err(StatusCode::UNAUTHORIZED), // TODO: Return a JSON error
-            User::ValidToken(token) => Ok(RequireUser(token)),
+            LoginState::Anonymous | LoginState::InvalidToken => Err(StatusCode::UNAUTHORIZED), // TODO: Return a JSON error
+            LoginState::ValidToken(token) => Ok(RequireUser(token)),
         }
     }
 }

@@ -9,8 +9,8 @@ edition = "2021"
 members = [
     ".",
     "api-types",
-    "database",
     "mail",
+    "crypto",
 ]
 
 [[bin]]
@@ -36,22 +36,12 @@ async-trait = "0.1.60"
 axum-auth = "0.4.0"
 axum-client-ip = "0.3.0"
 axum-macros = "0.3.0"
-api-types = { path = "api-types", features = ["snowflake_create", "sea_orm_integration", "axum_integration"] }
-database = { path = "database" }
+api-types = { path = "api-types", features = ["snowflake_create", "axum_integration", "sqlx_integration"] }
+sqlx = { version = "0.6.3", features = ["sqlite", "runtime-tokio-rustls"] }
 thiserror = "1.0.38"
 mail = { path = "mail" }
-
-[dependencies.sea-orm]
-version = "0.10.3" # sea-orm version
-features = [
-    "debug-print",
-    # "runtime-async-std-native-tls",
-    "runtime-async-std-rustls",
-    # "sqlx-postgres",
-    # "sqlx-mysql",
-    "sqlx-sqlite",
-]
-
+crypto = { path = "crypto" }
+lettre = { version = "0.10", default-features = false }
 
 
 [dev-dependencies]

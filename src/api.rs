@@ -1,13 +1,12 @@
-use database::core::sea_orm::DatabaseConnection;
-
 use axum::middleware::from_fn_with_state;
 use axum::{routing::get, Router};
+use sqlx::SqlitePool;
 
 use std::net::SocketAddr;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub db: DatabaseConnection,
+    pub db: SqlitePool,
 }
 
 #[tokio::main]
@@ -16,9 +15,12 @@ pub async fn main() {
     tracing_subscriber::fmt::init();
 
     dotenvy::dotenv().ok();
-    let db_url = std::env!("DATABASE_URL");
+    let db_url =
+        std::env::var("DATABASE_URL").expect("No DATABASE_URL environment variable provided");
 
-    let conn = database::connect(db_url).await;
+    let conn = sqlx::SqlitePool::connect(&db_url)
+        .await
+        .expect("Failed to connect to database");
 
     let app_state = AppState { db: conn };
 

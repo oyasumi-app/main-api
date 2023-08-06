@@ -1,46 +1,60 @@
 use axum::extract::{Json, State};
+use chrono::Duration;
+use crypto::{password::check_hash, token::generate_token};
+use sqlx::query;
 
-use crate::AppState;
+use crate::{v1::ResultResponse, AppState};
 use axum_client_ip::ClientIp;
-use database::core::query;
 
-use api_types::v1::login::*;
+use api_types::{v1::login::*, Snowflake};
 
-#[axum_macros::debug_handler]
 pub async fn login(
     State(app_state): State<AppState>,
     ClientIp(ip): ClientIp,
     Json(request): Json<LoginRequest>,
-) -> (axum::http::HeaderMap, Json<LoginResponse>) {
-    let login_id;
-    let pw;
+) -> ResultResponse<(axum::http::HeaderMap, Json<LoginResponse>)> {
     let mut headers = axum::http::HeaderMap::new();
-    match request {
+    let user_row = match request {
         LoginRequest::EmailPassword { email, password } => {
-            login_id = query::LoginIdentifier::Email(email);
-            pw = password;
+            let user_row: Option<_> = query!("SELECT * FROM user WHERE email=?", email)
+                .fetch_optional(&app_state.db)
+                .await?;
+            user_row.and_then(|row| check_hash(&password, &row.password_hash).then_some(row))
         }
     };
 
-    let user = query::Query::get_user_by_login(&app_state.db, login_id, &pw).await;
-
-    if user.is_none() {
-        return (
+    if user_row.is_none() {
+        return Ok((
             headers,
             Json(LoginResponse::Err(LoginError::InvalidCredentials)),
-        );
+        )); // TODO
     }
 
-    let user = user.unwrap();
+    let user = user_row.unwrap();
 
-    let token = database::entity::user_token::make_token(&app_state.db, &user, &ip)
-        .await
-        .unwrap();
+    const TOKEN_LENGTH: u16 = 32;
+    let new_token = generate_token(TOKEN_LENGTH);
+    let id = Snowflake::new().await;
+    let now = id.timestamp();
+    let expires = (now + login_expiration()).timestamp();
+    let ip_str = ip.to_string();
+    query!("INSERT INTO user_token (id, token, user_id, created_by_ip, expires_unix_time) VALUES (?,?,?,?,?)",
+        id,
+        new_token,
+        user.id,
+        ip_str,
+        expires
+    ).execute(&app_state.db).await?;
 
+    let token = new_token;
     headers.insert(
         axum::http::header::SET_COOKIE,
         axum::http::HeaderValue::from_str(&format!("Token={token}; Path=/")).unwrap(),
     );
 
-    (headers, Json(LoginResponse::Ok { token }))
+    Ok((headers, Json(LoginResponse::Ok { token })))
+}
+
+fn login_expiration() -> Duration {
+    Duration::days(14)
 }

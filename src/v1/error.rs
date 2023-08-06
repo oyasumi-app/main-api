@@ -33,7 +33,7 @@ impl From<ApiError> for ResponseError {
 #[derive(thiserror::Error, Debug)]
 pub enum ApiError {
     #[error("Database error: {0}")]
-    DatabaseErr(sea_orm::DbErr),
+    DatabaseErr(sqlx::Error),
 
     #[error("this should never happen (please report a bug!): {0}")]
     UnexpectedError(String),
@@ -45,15 +45,15 @@ pub enum ApiError {
     Forbidden,
 }
 
-impl From<sea_orm::DbErr> for ApiError {
-    fn from(err: sea_orm::DbErr) -> Self {
+impl From<sqlx::Error> for ApiError {
+    fn from(err: sqlx::Error) -> Self {
         Self::DatabaseErr(err)
     }
 }
 
-impl From<sea_orm::DbErr> for ResponseError {
-    fn from(err: sea_orm::DbErr) -> Self {
-        Self::from(ApiError::from(err))
+impl From<sqlx::Error> for ResponseError {
+    fn from(err: sqlx::Error) -> Self {
+        err.into()
     }
 }
 

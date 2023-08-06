@@ -1,14 +1,14 @@
 use axum::Json;
 
-use crate::{ExtractUser, User};
+use crate::{ExtractUser, LoginState};
 
 use api_types::v1::token_info::*;
 
 pub async fn check(ExtractUser(user): ExtractUser) -> Json<CheckResponse> {
     match user {
-        User::Anonymous => Json(CheckResponse::Anonymous),
-        User::InvalidToken => Json(CheckResponse::InvalidToken),
-        User::ValidToken((user, token)) => Json(CheckResponse::ValidToken(TokenData {
+        LoginState::Anonymous => Json(CheckResponse::Anonymous),
+        LoginState::InvalidToken => Json(CheckResponse::InvalidToken),
+        LoginState::ValidToken((user, token)) => Json(CheckResponse::ValidToken(TokenData {
             user: TokenUserData {
                 id: user.id,
                 username: user.username,

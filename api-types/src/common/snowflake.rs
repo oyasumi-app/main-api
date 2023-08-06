@@ -1,20 +1,15 @@
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
+    time::Duration,
 };
 
-#[cfg(feature = "snowflake_create")]
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::UNIX_EPOCH;
 
 #[cfg(feature = "snowflake_create")]
 use async_std::sync::Mutex;
 
-#[cfg(feature = "sea_orm_integration")]
 use chrono::{DateTime, Utc};
-#[cfg(feature = "sea_orm_integration")]
-use sea_orm::DbErr;
-#[cfg(feature = "sea_orm_integration")]
-use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
@@ -43,6 +38,8 @@ impl Snowflake {
     /// This function is thread-safe.
     #[cfg(feature = "snowflake_create")]
     pub async fn new() -> Self {
+        use std::time::SystemTime;
+
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Time is before 1970")
@@ -54,7 +51,6 @@ impl Snowflake {
     }
 
     /// Get the timestamp from a Snowflake.
-    #[cfg(feature = "sea_orm_integration")]
     pub fn timestamp(&self) -> DateTime<Utc> {
         let timestamp = self.0 >> 16;
         let timestamp = UNIX_EPOCH + Duration::from_millis(timestamp.try_into().unwrap());
@@ -98,49 +94,31 @@ impl FromStr for Snowflake {
 
 // SeaORM integration starts here
 
-#[cfg(feature = "sea_orm_integration")]
-impl From<Snowflake> for sea_orm::Value {
-    fn from(snowflake: Snowflake) -> Self {
-        sea_orm::Value::BigInt(Some(snowflake.0))
+#[cfg(feature = "sqlx_integration")]
+use sqlx::{Decode, Encode, Sqlite, Type};
+
+#[cfg(feature = "sqlx_integration")]
+impl Type<Sqlite> for Snowflake {
+    fn type_info() -> <Sqlite as sqlx::Database>::TypeInfo {
+        i64::type_info()
     }
 }
 
-#[cfg(feature = "sea_orm_integration")]
-impl sea_orm::sea_query::ValueType for Snowflake {
-    fn try_from(v: sea_orm::Value) -> Result<Self, sea_orm::sea_query::ValueTypeErr> {
-        match v {
-            sea_orm::Value::BigInt(Some(i)) => Ok(Snowflake(i)),
-            _ => Err(sea_orm::sea_query::ValueTypeErr),
-        }
-    }
-
-    fn type_name() -> String {
-        "bigint".to_string()
-    }
-
-    fn column_type() -> sea_orm::sea_query::ColumnType {
-        sea_orm::sea_query::ColumnType::BigInteger(None)
-    }
-
-    fn array_type() -> sea_orm::sea_query::ArrayType {
-        sea_orm::sea_query::ArrayType::BigInt
+#[cfg(feature = "sqlx_integration")]
+impl Encode<'_, Sqlite> for Snowflake {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Sqlite as sqlx::database::HasArguments<'_>>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull {
+        self.0.encode_by_ref(buf)
     }
 }
 
-#[cfg(feature = "sea_orm_integration")]
-impl sea_orm::TryGetable for Snowflake {
-    fn try_get(
-        res: &sea_orm::QueryResult,
-        pre: &str,
-        col: &str,
-    ) -> Result<Self, sea_orm::TryGetError> {
-        i64::try_get(res, pre, col).map(Snowflake)
-    }
-}
-
-#[cfg(feature = "sea_orm_integration")]
-impl sea_orm::TryFromU64 for Snowflake {
-    fn try_from_u64(v: u64) -> Result<Self, DbErr> {
-        Ok(Snowflake(u64_to_i64(v)))
+#[cfg(feature = "sqlx_integration")]
+impl Decode<'_, Sqlite> for Snowflake {
+    fn decode(
+        value: <Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef,
+    ) -> Result<Self, sqlx::error::BoxDynError> {
+        Ok(Snowflake::from(i64::decode(value)?))
     }
 }

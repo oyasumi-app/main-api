@@ -6,19 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-sea_orm_integration = ["dep:sea-orm"]
 snowflake_create = ["dep:async-std"]
 axum_integration = ["dep:axum"]
+sqlx_integration = ["dep:sqlx"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
-sea-orm = { version = "0.10.3", optional = true }
 async-std = { version = "1", optional = true }
 strum = { version = "0.24.1", features = ["derive"] }
 axum = { version = "0.6.1", features = ["macros"], optional = true }
 anyhow = "1.0.66"
 lettre = { version = "0.10", features = ["serde"], default-features = false }
+sqlx = { version = "0.6.3", features = ["sqlite"], optional = true }
 
 
 [dev-dependencies]
