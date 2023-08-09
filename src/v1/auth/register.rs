@@ -162,14 +162,9 @@ pub async fn resend_confirm_email(
     Path(reg_id): Path<Snowflake>,
 ) -> ResultResponse<(StatusCode, Json<ResendConfirmationResponse>)> {
     // Get the registration by id, bail early if not found
-    let now = DateTimeUtc::from(SystemTime::now()).timestamp();
-    let pending_registration = query!(
-        "SELECT * FROM registration WHERE id=? AND expires_unix_time > ?",
-        reg_id,
-        now
-    )
-    .fetch_optional(&app_state.db)
-    .await?;
+    let pending_registration = query!("SELECT * FROM registration WHERE id=?", reg_id)
+        .fetch_optional(&app_state.db)
+        .await?;
     let registration = match pending_registration {
         None => return Err(ApiError::NotFound.into()),
         Some(reg) => reg,
@@ -177,7 +172,7 @@ pub async fn resend_confirm_email(
 
     // Check if we are now after the retry time
     let now: DateTimeUtc = SystemTime::now().into();
-    if registration.email_resend_after_unix_time < now.timestamp() {
+    if registration.email_resend_after_unix_time > now.timestamp() {
         return Ok((
             StatusCode::TOO_MANY_REQUESTS,
             Json(ResendConfirmationResponse::TooEarly),
