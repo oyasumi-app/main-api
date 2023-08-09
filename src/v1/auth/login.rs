@@ -1,4 +1,7 @@
-use axum::extract::{Json, State};
+use axum::{
+    extract::{Json, State},
+    http::StatusCode,
+};
 use chrono::Duration;
 use crypto::{password::check_hash, token::generate_token};
 use sqlx::query;
@@ -12,7 +15,9 @@ pub async fn login(
     State(app_state): State<AppState>,
     ClientIp(ip): ClientIp,
     Json(request): Json<LoginRequest>,
-) -> ResultResponse<(axum::http::HeaderMap, Json<LoginResponse>)> {
+) -> ResultResponse<
+    Result<(axum::http::HeaderMap, Json<LoginSuccess>), (StatusCode, Json<LoginError>)>,
+> {
     let mut headers = axum::http::HeaderMap::new();
     let user_row = match request {
         LoginRequest::EmailPassword { email, password } => {
@@ -24,10 +29,10 @@ pub async fn login(
     };
 
     if user_row.is_none() {
-        return Ok((
-            headers,
-            Json(LoginResponse::Err(LoginError::InvalidCredentials)),
-        )); // TODO
+        return Ok(Err((
+            StatusCode::UNAUTHORIZED,
+            Json(LoginError::InvalidCredentials),
+        )));
     }
 
     let user = user_row.unwrap();
@@ -52,7 +57,7 @@ pub async fn login(
         axum::http::HeaderValue::from_str(&format!("Token={token}; Path=/")).unwrap(),
     );
 
-    Ok((headers, Json(LoginResponse::Ok { token })))
+    Ok(Ok((headers, Json(LoginSuccess { token }))))
 }
 
 fn login_expiration() -> Duration {

@@ -12,9 +12,8 @@ pub enum LoginRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum LoginResponse {
-    Ok { token: String },
-    Err(LoginError),
+pub struct LoginSuccess {
+    pub token: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
