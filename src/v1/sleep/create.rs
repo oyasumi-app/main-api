@@ -7,7 +7,7 @@ use crate::{v1::ResultResponse, AppState, RequireUser};
 pub async fn create_now(
     State(app_state): State<AppState>,
     RequireUser((conn_user, _conn_token)): RequireUser,
-) -> ResultResponse<Result<Json<SleepState>, StatusCode>> {
+) -> ResultResponse<Result<(StatusCode, Json<SleepState>), StatusCode>> {
     // Check if there is a row with no end time.
     // If there is, return a Conflict
     let existing_row = query!(
@@ -35,10 +35,13 @@ pub async fn create_now(
     .execute(&app_state.db)
     .await?;
 
-    Ok(Ok(Json(SleepState {
-        id,
-        start: id.timestamp(),
-        end: None,
-        comment: None,
-    })))
+    Ok(Ok((
+        StatusCode::CREATED,
+        Json(SleepState {
+            id,
+            start: id.timestamp(),
+            end: None,
+            comment: None,
+        }),
+    )))
 }

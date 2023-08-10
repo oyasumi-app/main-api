@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Snowflake;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "status")]
 pub enum CheckResponse {
     Anonymous,

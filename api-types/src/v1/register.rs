@@ -2,14 +2,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::Snowflake;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RegistrationRequest {
     pub username: String,
     pub email: lettre::Address,
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "status")]
 pub enum RegistrationResponse {
     Ok { id: Snowflake },
@@ -18,7 +18,7 @@ pub enum RegistrationResponse {
     DatabaseError,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PendingRegistration {
     pub username: String,
     pub email: lettre::Address,
@@ -26,7 +26,7 @@ pub struct PendingRegistration {
     pub expires_after: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "status")]
 pub enum ResendConfirmationResponse {
     /// The confirmation was resent.

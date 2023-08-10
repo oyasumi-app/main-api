@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 /// Its `Debug` output is a string of the form `Anonymized::<T>(...)`.
 /// This is useful for showing structs with sensitive info (like passwords)
 /// in debug output.
+#[derive(Clone)]
 pub struct Anonymized<T>(pub T);
 
 impl<T> From<T> for Anonymized<T> {

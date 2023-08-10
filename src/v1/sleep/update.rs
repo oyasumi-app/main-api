@@ -90,7 +90,7 @@ pub async fn set_current_start(
     .fetch_optional(&app_state.db)
     .await?;
     match row {
-        Some(_row) => Ok(StatusCode::OK),
+        Some(_row) => Ok(StatusCode::NO_CONTENT),
         None => Ok(StatusCode::NOT_FOUND),
     }
 }

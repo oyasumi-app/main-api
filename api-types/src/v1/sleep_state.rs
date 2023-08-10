@@ -4,7 +4,7 @@ use crate::Snowflake;
 
 use super::DateTimeUtc;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SleepState {
     pub id: Snowflake,
     pub start: DateTimeUtc,
