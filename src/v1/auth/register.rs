@@ -8,6 +8,7 @@ use axum::{
 use axum_client_ip::ClientIp;
 use chrono::Duration;
 use crypto::{password::make_hash, token::generate_token};
+use hcaptcha::{HcaptchaCaptcha, HcaptchaClient, HcaptchaRequest};
 use sqlx::query;
 
 use crate::{
@@ -18,11 +19,63 @@ use crate::{
 
 use api_types::{v1::register::*, Snowflake};
 
+pub async fn get_registration_info() -> Json<RegistrationPrerequisites> {
+    Json(RegistrationPrerequisites {
+        hcaptcha_sitekey: env!("HCAPTCHA_SITEKEY").to_string(),
+    })
+}
+
 pub async fn make_registration(
     State(app_state): State<AppState>,
     ClientIp(ip): ClientIp,
     Json(request): Json<RegistrationRequest>,
 ) -> ResultResponse<Json<RegistrationResponse>> {
+    // Try to validate the hCaptcha response
+
+    async fn process_captcha(request: &RegistrationRequest) -> Result<(), RegistrationResponse> {
+        let client = HcaptchaClient::new();
+        let captcha_response = HcaptchaCaptcha::new(&request.hcaptcha_response);
+        let captcha_response = match captcha_response {
+            Ok(resp) => resp,
+            Err(e) => {
+                return Err(RegistrationResponse::HcaptchaFailure {
+                    error: format!("Could not parse incoming CAPTCHA response: {e}"),
+                })
+            }
+        };
+
+        let request = match HcaptchaRequest::new(env!("HCAPTCHA_SECRET_KEY"), captcha_response) {
+            Ok(r) => r,
+            Err(e) => {
+                return Err(RegistrationResponse::HcaptchaFailure {
+                    error: format!("Could not construct CAPTCHA verify request: {e}"),
+                })
+            }
+        };
+
+        let response = match client.verify_client_response(request).await {
+            Ok(resp) => resp,
+            Err(e) => {
+                return Err(RegistrationResponse::HcaptchaFailure {
+                    error: format!("Could not fetch result of CAPTCHA verification: {e}"),
+                })
+            }
+        };
+
+        if !response.success() {
+            return Err(RegistrationResponse::HcaptchaFailure {
+                error: format!("CAPTCHA challenge was not successful"),
+            });
+        }
+
+        Ok(())
+    }
+
+    match process_captcha(&request).await {
+        Ok(_) => {}
+        Err(e) => return Ok(Json(e)),
+    };
+
     let now = DateTimeUtc::from(SystemTime::now()).timestamp();
     let email_str = request.email.to_string();
     let pending_registration = query!(

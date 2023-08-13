@@ -17,6 +17,9 @@ members = [
 name = "main-api"
 path = "src/main.rs"
 
+[profile.dev]
+opt-level="s"
+
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
@@ -42,6 +45,7 @@ thiserror = "1.0.38"
 mail = { path = "mail" }
 crypto = { path = "crypto" }
 lettre = { version = "0.10", default-features = false }
+hcaptcha = { version = "2.2.2", features = ["rustls-backend"], default-features = false }
 
 
 [dev-dependencies]

@@ -3,10 +3,16 @@ use serde::{Deserialize, Serialize};
 use crate::Snowflake;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RegistrationPrerequisites {
+    pub hcaptcha_sitekey: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RegistrationRequest {
     pub username: String,
     pub email: lettre::Address,
     pub password: String,
+    pub hcaptcha_response: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -16,6 +22,7 @@ pub enum RegistrationResponse {
     PendingRegistrationExists { id: Snowflake },
     //Err, // TODO: a registration request for an existing username/email MUST NOT be an error (to prevent enumeration attacks)
     DatabaseError,
+    HcaptchaFailure { error: String },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
